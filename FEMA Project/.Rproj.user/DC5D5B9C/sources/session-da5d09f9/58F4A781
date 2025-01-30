@@ -1,0 +1,27 @@
+{
+    "id": "58F4A781",
+    "path": "~/College/EMSE 3820/FEMA Project/FEMA Data Start.qmd",
+    "project_path": "FEMA Data Start.qmd",
+    "type": "quarto_markdown",
+    "hash": "3111943153",
+    "contents": "",
+    "dirty": false,
+    "created": 1738256214830.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "55,6",
+        "scrollLine": "26",
+        "last_setup_crc32": "da5d09f97d490340"
+    },
+    "folds": "0|3|8|0|\n10|6|23|0|\n25|6|34|0|\n36|7|53|0|\n55|6|69|0|\n71|6|72|0|\n",
+    "lastKnownWriteTime": 1738264895,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1738266139549,
+    "read_only": false,
+    "read_only_alternatives": []
+}

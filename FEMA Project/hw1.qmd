@@ -1,0 +1,40 @@
+---
+title: "title"
+author: "author"
+format:
+  html:
+    toc: true
+    toc-location: right
+    theme: flatly
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+knitr::opts_chunk$set(
+    warning = FALSE,
+    message = FALSE,
+    fig.path = "figs/",
+    fig.width = 7.252,
+    fig.height = 4,
+    comment = "#>",
+    fig.retina = 3
+)
+```
+
+# Tip of the week
+
+This is a Quarto document for you to take notes in as you complete this week's homework. In each homework template I'll include a tip for working with .qmd files.
+
+Before you start the assignment:
+
+- Update the header - give it a `title` and put your name in the `author` argument.
+- Click the "Render" button in RStudio and then open the rendered `hw1.html` page.
+- Then go back and try changing the `theme` argument in the header to something else - you can see other available themes [here](https://quarto.org/docs/output-formats/html-themes.html). Notice the difference when you render now!
+
+
+# Begin notes here
+
+
+# Reflection

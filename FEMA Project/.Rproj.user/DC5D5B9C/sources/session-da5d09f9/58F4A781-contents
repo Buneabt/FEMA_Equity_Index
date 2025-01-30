@@ -1,0 +1,73 @@
+---
+title: "title"
+author: "author"
+format:
+  html:
+    toc: true
+    toc-location: right
+    theme: flatly
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+knitr::opts_chunk$set(
+    warning = FALSE,
+    message = FALSE,
+    fig.path = "figs/",
+    fig.width = 7.252,
+    fig.height = 4,
+    comment = "#>",
+    fig.retina = 3
+)
+``` 
+
+```{r}
+#Packages
+library(hrbrthemes)
+library(knitr)
+library(cowplot)
+library(viridis)
+library(lubridate)
+library(tidyverse)
+library(here)
+``` 
+
+```{r} 
+#NRICenus
+NRICensus <- read.csv(here('Data','NRI_Table_CensusTracts','NRI_Table_CensusTracts.csv'))
+
+view(NRICensus)
+
+NRICensusMO <- NRICensus %>% 
+    filter(STATE == 'Missouri')
+
+View(NRICensusMO)
+
+NRICensusMOCounty <- NRICensusMO %>% 
+    filter(COUNTY == 'Jasper' | COUNTY == 'Newton')
+
+View(NRICensusMOCounty)
+
+write.csv(NRICensusMOCounty, "NRICensusCounty.csv")
+``` 
+
+```{r}
+HousingAssist. <- read.csv(here('Data','HousingAssistanceOwners.csv'))
+
+HousingAssistMo <- HousingAssist. %>% 
+    filter(state == 'MO')
+
+View(HousingAssistMO)
+
+HousingAssist1980 <- HousingAssistMo %>% 
+    filter(disasterNumber == 1980)
+
+HousingAssistJop <- HousingAssist1980 %>% 
+    filter(city == 'JOPLIN')
+
+``` 
+
+```{r}
+```
