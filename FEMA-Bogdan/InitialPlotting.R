@@ -41,7 +41,7 @@ calculate_aid <- function(affected_area_data, total_aid) {
   return(return_data)
 }
 
-  result <- calculate_aid(df1, 174*10^6)
+  result <- calculate_aid(df1, 174*10^6) #Jasper County Location data, Plus aid sent during Jopin $174 million USD
   
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
