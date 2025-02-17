@@ -42,10 +42,6 @@ calculate_aid <- function(affected_area_data, total_aid) {
 }
 
   result <- calculate_aid(df1, 174*10^6)
-
- 
-
-
   
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
