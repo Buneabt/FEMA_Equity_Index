@@ -10,9 +10,20 @@ df1 <- read.csv("svi_interactive_map.csv") %>%
   filter(SPL_THEMES > 0, COUNTY == "Jasper County", STATE == "Missouri")
 
 
+mu <- mean(df$SPL_THEMES)
+sigma <- sd(df$SPL_THEMES)
 
-#ggplot(data = df1, aes(x = SPL_THEMES)) + 
-#  geom_histogram()
+
+ggplot(data = df, aes(x = SPL_THEMES)) + 
+  geom_histogram(aes(y = after_stat(density)), bins = 50) +
+  # Add normal distribution
+  stat_function(fun = dnorm, args = list(mean = mu, sd = sigma), 
+                color = "red", linewidth = 1) +
+  # Add legend
+  theme_minimal() +
+  labs(title = "National SVI Distribution with Theoretical Fits",
+       x = "SPL_THEMES",
+       y = "Density")
 
 
 calculate_aid <- function(affected_area_data, total_aid) {
@@ -31,21 +42,25 @@ calculate_aid <- function(affected_area_data, total_aid) {
   
   #An allocation funciton (how we will do our equity)
   allocation_func <- function(x) {
-    return(exp(0.3*x))
+    return(exp(0.5*x))
   }
   # Find our how far our points are from the center
   affected_area_data <- mutate(
       affected_area_data, 
-      SPL_CENTER = (SPL_THEMES - national_mean),
+      SPLCENTER = (SPL_THEMES - national_mean),
 
-      SPL_CENTER = pmin(pmax(SPL_CENTER, floor_value), ceiling_value),
-      AllocationScore = allocation_func(SPL_CENTER),
+      SPLCENTER = pmin(pmax(SPLCENTER, floor_value), ceiling_value),
+      AllocationScore = allocation_func(SPLCENTER),
       AllocationPercentage = AllocationScore / sum(AllocationScore),
-      Aid_Per_FIPS = AllocationPercentage * total_aid
+      AidPerFIPS = AllocationPercentage * total_aid,
+      AllocationPercentage = round(AllocationPercentage,4),
+      AllocationScore = round(AllocationScore,4),
+      SPLCENTER = round(SPLCENTER,4)
   )
   
   return_data <- affected_area_data %>% 
-                select(FIPS, SPL_CENTER, AllocationScore, AllocationPercentage, Aid_Per_FIPS)
+                select(FIPS, SPLCENTER, AllocationScore, AllocationPercentage, AidPerFIPS) %>% 
+                arrange(desc(AidPerFIPS))
   
   return(return_data)
 }
