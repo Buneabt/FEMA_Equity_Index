@@ -28,7 +28,7 @@ calculate_aid <- function(affected_area_data, total_aid) {
   }
   # Find our how far our points are from the center
   affected_area_data <- mutate(
-                               affected_area_data, SPL_CENTER = (affected_area_data$SPL_THEMES - median(national_baseline$SPL_THEMES)),
+                               affected_area_data, SPL_CENTER = (affected_area_data$SPL_THEMES - mean(national_baseline$SPL_THEMES)),
                                AllocationScore = allocation_func(SPL_CENTER),
                                #Normalize it here 
                                AllocationPercentage = AllocationScore / sum(AllocationScore),
