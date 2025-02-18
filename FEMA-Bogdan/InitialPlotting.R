@@ -7,7 +7,7 @@ df <- read.csv("svi_interactive_map.csv") %>%
   filter(SPL_THEMES >0)
 
 df1 <- read.csv("svi_interactive_map.csv") %>% 
-  filter(SPL_THEMES > 0, COUNTY == "Jasper County", STATE == "Missouri")
+  filter(SPL_THEMES > 0, STATE == "Missouri", COUNTY == "Jasper County")
 
 
 mu <- mean(df$SPL_THEMES)
@@ -21,7 +21,7 @@ ggplot(data = df, aes(x = SPL_THEMES)) +
                 color = "red", linewidth = 1) +
   # Add legend
   theme_minimal() +
-  labs(title = "National SVI Distribution with Theoretical Fits",
+  labs(title = "National SVI Distribution with Normal Distribution Fit",
        x = "SPL_THEMES",
        y = "Density")
 
@@ -65,7 +65,7 @@ calculate_aid <- function(affected_area_data, total_aid) {
   return(return_data)
 }
 
-  result <- calculate_aid(df1, 174*10^6) #Jasper County Location data, Plus aid sent during Joplin $174 million USD (this assumes all went towards individuals and not general rebuilding)
+  result <- calculate_aid(df1, 1.04*10^5) #Jasper County Location data, Plus aid sent during Joplin $174 million USD (this assumes all went towards individuals and not general rebuilding)
   
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
