@@ -11,8 +11,8 @@ df1 <- read.csv("svi_interactive_map.csv") %>%
 
 
 
-ggplot(data = df1, aes(x = SPL_THEMES)) + 
-  geom_histogram()
+#ggplot(data = df1, aes(x = SPL_THEMES)) + 
+#  geom_histogram()
 
 
 calculate_aid <- function(affected_area_data, total_aid) {
@@ -22,18 +22,32 @@ calculate_aid <- function(affected_area_data, total_aid) {
     filter(SPL_THEMES > 0) %>% select(SPL_THEMES) %>% 
     select(SPL_THEMES)
   
+  national_sd <- sd(national_baseline$SPL_THEMES)
+  national_mean <- mean(national_baseline$SPL_THEMES)
+  
+  # Set floor and ceiling (2 standard deviations)
+  floor_value <- -1.5 * national_sd
+  ceiling_value <- 1.5 * national_sd
+  
+  
+  floor_value <- -sd_multiplier * national_sd
+  ceiling_value <- sd_multiplier * national_sd
+  
+  
   #An allocation funciton (how we will do our equity)
   allocation_func <- function(x) {
     return(exp(0.3*x))
   }
   # Find our how far our points are from the center
   affected_area_data <- mutate(
-                               affected_area_data, SPL_CENTER = (affected_area_data$SPL_THEMES - mean(national_baseline$SPL_THEMES)),
-                               AllocationScore = allocation_func(SPL_CENTER),
-                               #Normalize it here 
-                               AllocationPercentage = AllocationScore / sum(AllocationScore),
-                               Aid_Per_FIPS = AllocationPercentage * total_aid
-                               )
+      affected_area_data, 
+      SPL_CENTER = (SPL_THEMES - national_mean),
+
+      SPL_CENTER = pmin(pmax(SPL_CENTER, floor_value), ceiling_value),
+      AllocationScore = allocation_func(SPL_CENTER),
+      AllocationPercentage = AllocationScore / sum(AllocationScore),
+      Aid_Per_FIPS = AllocationPercentage * total_aid
+  )
   
   return_data <- affected_area_data %>% 
                 select(FIPS, SPL_CENTER, AllocationScore, AllocationPercentage, Aid_Per_FIPS)
