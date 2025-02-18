@@ -25,14 +25,9 @@ calculate_aid <- function(affected_area_data, total_aid) {
   national_sd <- sd(national_baseline$SPL_THEMES)
   national_mean <- mean(national_baseline$SPL_THEMES)
   
-  # Set floor and ceiling (2 standard deviations)
+  # Set floor and ceiling (1.5 standard deviations)
   floor_value <- -1.5 * national_sd
   ceiling_value <- 1.5 * national_sd
-  
-  
-  floor_value <- -sd_multiplier * national_sd
-  ceiling_value <- sd_multiplier * national_sd
-  
   
   #An allocation funciton (how we will do our equity)
   allocation_func <- function(x) {
@@ -55,7 +50,7 @@ calculate_aid <- function(affected_area_data, total_aid) {
   return(return_data)
 }
 
-  result <- calculate_aid(df1, 174*10^6) #Jasper County Location data, Plus aid sent during Jopin $174 million USD
+  result <- calculate_aid(df1, 174*10^6) #Jasper County Location data, Plus aid sent during Joplin $174 million USD (this assumes all went towards individuals and not general rebuilding)
   
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
