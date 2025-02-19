@@ -26,7 +26,7 @@ ggplot(data = df, aes(x = SPL_THEMES)) +
        y = "Density")
 
 
-calculate_aid <- function(affected_area_data, total_aid) {
+calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   #Get our national Baseline, we can do work on these stats
   national_baseline <- read.csv("svi_interactive_map.csv") %>% 
