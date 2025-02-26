@@ -30,8 +30,7 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   #Get our national Baseline, we can do work on these stats
   national_baseline <- read.csv("svi_interactive_map.csv") %>% 
-    filter(SPL_THEMES > 0) %>% select(SPL_THEMES) %>% 
-    select(SPL_THEMES)
+    filter(SPL_THEMES > 0) %>% select(SPL_THEMES)
   
   national_sd <- sd(national_baseline$SPL_THEMES)
   national_mean <- mean(national_baseline$SPL_THEMES)
@@ -44,7 +43,47 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   allocation_func <- function(x) {
     return(exp(0.5*x))
   }
-  # Find our how far our points are from the center
+  
+  if(!"DamageLvl" %in% colnames(affected_area_data)) {
+    affected_area_data <- affected_area_data %>% 
+      mutate(DamageLvl = 5)
+  }
+
+  
+  # This will let users change the damage level of each FIPS to calculate a different weight
+  damageAssessment <- function(affected_area_data) {
+    cat("Input Damage Assessment for Each FIPS with 10 being the most severe and 1 being the least:\n\n")
+    
+    for(i in 1:nrow(affected_area_data)) {
+      fips <- affected_area_data$FIPS[i]
+      current_damage <- affected_area_data$DamageLvl[i]
+      
+      # Display prompt for current FIPS
+      cat(paste0(fips, " Current Value[", current_damage, "] New Input: "))
+      
+      # Get user input with validation (must be 1-10)
+      valid_input <- FALSE
+      while(!valid_input) {
+        user_input <- as.integer(readline())
+        
+        if(!is.na(user_input) && user_input >= 1 && user_input <= 10) {
+          valid_input <- TRUE
+          affected_area_data$DamageLvl[i] <- user_input
+        } else {
+          cat("Please enter a number between 1 and 10: ")
+        }
+      }
+    }
+    
+    return(affected_area_data)
+  }
+  
+  affected_area_data <- damageAssessment(affected_area_data)
+  
+  # Find our how far our points are from the center 
+  
+  # HERE I NEED TO STILL IMPLEMENT WEIGHTING CHANGE
+  
   affected_area_data <- mutate(
       affected_area_data, 
       SPLCENTER = (SPL_THEMES - national_mean),
@@ -59,16 +98,20 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   )
   
   return_data <- affected_area_data %>% 
-                select(FIPS, SPLCENTER, AllocationScore, AllocationPercentage, AidPerFIPS) %>% 
+                select(FIPS, DamageLvl, SPLCENTER, AllocationScore, AllocationPercentage, AidPerFIPS) %>% 
                 arrange(desc(AidPerFIPS))
   
   return(return_data)
 }
 
+
+
+
   result <- calculate_aid(df1, 1.04*10^5) #Jasper County Location data, Plus aid sent during Joplin $174 million USD (this assumes all went towards individuals and not general rebuilding)
   
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
+  
   
   
   
