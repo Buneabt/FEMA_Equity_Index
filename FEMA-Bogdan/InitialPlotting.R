@@ -7,7 +7,24 @@ df <- read.csv("svi_interactive_map.csv") %>%
   filter(SPL_THEMES >0)
 
 df1 <- read.csv("svi_interactive_map.csv") %>% 
-  filter(SPL_THEMES > 0, STATE == "Missouri", COUNTY == "Jasper County")
+  filter(SPL_THEMES > 0)
+
+df1$FIPS <- as.numeric(df1$FIPS)
+
+df1 <- df1[df1$FIPS %in% c(
+  29097010400,
+  29097010500,
+  29097010600,
+  29097010700,
+  29097010800,
+  29097010900,
+  29097011900,
+  29145020501,
+  29145020502,
+  29145020601
+                           ),
+           ]
+
 
 
 mu <- mean(df$SPL_THEMES)
