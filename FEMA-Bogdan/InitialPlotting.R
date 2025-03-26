@@ -43,6 +43,47 @@ ggplot(data = df, aes(x = SPL_THEMES)) +
        y = "Density")
 
 
+
+# This will let users change the damage level of each FIPS to calculate a different weight
+damageAssessment <- function(affected_area_data) {
+  cat("Input Damage Assessment for Each FIPS with 10 being the most severe and 1 being the least:\n\n")
+  
+  for(i in 1:nrow(affected_area_data)) {
+    fips <- affected_area_data$FIPS[i]
+    current_damage <- affected_area_data$DamageLvl[i]
+    
+    # Display prompt for current FIPS
+    cat(paste0(fips, " Current Value[", current_damage, "] New Input: "))
+    
+    # Get user input with validation (must be 1-10)
+    valid_input <- FALSE
+    while(!valid_input) {
+      user_input_raw <- readline()
+      
+      # Check if the input is empty (just hitting enter)
+      if(user_input_raw == "") {
+        valid_input <- TRUE
+        # Keep the previous value (no change needed)
+      } else {
+        user_input <- as.integer(user_input_raw)
+        
+        if(!is.na(user_input) && user_input >= 1 && user_input <= 10) {
+          valid_input <- TRUE
+          affected_area_data$DamageLvl[i] <- user_input
+        } else {
+          cat("Please enter a number between 1 and 10 (or press Enter to keep previous value): ")
+        }
+      }
+    }
+  }
+  
+  return(affected_area_data)
+}
+
+
+
+
+
 calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   #Get our national Baseline, we can do work on these stats
@@ -66,35 +107,6 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
       mutate(DamageLvl = 5)
   }
 
-  
-  # This will let users change the damage level of each FIPS to calculate a different weight
-  damageAssessment <- function(affected_area_data) {
-    cat("Input Damage Assessment for Each FIPS with 10 being the most severe and 1 being the least:\n\n")
-    
-    for(i in 1:nrow(affected_area_data)) {
-      fips <- affected_area_data$FIPS[i]
-      current_damage <- affected_area_data$DamageLvl[i]
-      
-      # Display prompt for current FIPS
-      cat(paste0(fips, " Current Value[", current_damage, "] New Input: "))
-      
-      # Get user input with validation (must be 1-10)
-      valid_input <- FALSE
-      while(!valid_input) {
-        user_input <- as.integer(readline())
-        
-        if(!is.na(user_input) && user_input >= 1 && user_input <= 10) {
-          valid_input <- TRUE
-          affected_area_data$DamageLvl[i] <- user_input
-        } else {
-          cat("Please enter a number between 1 and 10: ")
-        }
-      }
-    }
-    
-    return(affected_area_data)
-  }
-  
   affected_area_data <- damageAssessment(affected_area_data)
   
   # Find our how far our points are from the center 
@@ -106,7 +118,7 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
       SPLCENTER = (SPL_THEMES - national_mean),
 
       SPLCENTER = pmin(pmax(SPLCENTER, floor_value), ceiling_value),
-      AllocationScore = allocation_func(SPLCENTER),
+      AllocationScore = allocation_func(SPLCENTER) * (affected_area_data$DamageLvl/5),
       AllocationPercentage = AllocationScore / sum(AllocationScore),
       AidPerFIPS = AllocationPercentage * total_aid,
       AllocationPercentage = round(AllocationPercentage,4),
