@@ -46,7 +46,7 @@ ggplot(data = df, aes(x = SPL_THEMES)) +
 
 # This will let users change the damage level of each FIPS to calculate a different weight
 damageAssessment <- function(affected_area_data) {
-  cat("Input Damage Assessment for Each FIPS with 10 being the most severe and 1 being the least:\n\n")
+  cat("Input Damage Assessment for Each FIPS with 10 (Total Destruction) being the most severe and 1 (No Damage) being the least:\n\n")
   
   for(i in 1:nrow(affected_area_data)) {
     fips <- affected_area_data$FIPS[i]
