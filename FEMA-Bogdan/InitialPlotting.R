@@ -2,6 +2,7 @@ library(tidyr)
 library(ggplot2)
 library(here)
 library(tidyverse)
+library(purrr)
 
 df <- read.csv("svi_interactive_map.csv") %>% 
   filter(SPL_THEMES >0)
@@ -30,9 +31,42 @@ df1 <- df1[df1$FIPS %in% c(
            ]
 
 
-
 mu <- mean(df$SPL_THEMES)
 sigma <- sd(df$SPL_THEMES)
+
+
+
+dfJoplin_Updated <- data.frame(
+  FIPS = c(
+    29097010400,
+    29097010500,
+    29097010600,
+    29097010700,
+    29097010800,
+    29097010900,
+    29097011900,
+    29145020501,
+    29145020502,
+    29145020601
+  ), 
+  SPL_THEMES = c(
+    -0.3792,
+    -0.3130,
+    -1.2726,
+    -0.4433,
+    -1.2168,
+    -0.4251,
+    0.2214,
+    -0.0939,
+    -0.3755,
+    -0.5786
+  )
+)
+
+dfJoplin_Updated$SPL_THEMES <- -1 * dfJoplin_Updated$SPL_THEMES 
+
+
+
 
 
 ggplot(data = df, aes(x = SPL_THEMES)) + 
@@ -94,12 +128,12 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   national_baseline <- read.csv("svi_interactive_map.csv") %>% 
     filter(SPL_THEMES > 0) %>% select(SPL_THEMES)
   
-  national_sd <- sd(national_baseline$SPL_THEMES)
-  national_mean <- mean(national_baseline$SPL_THEMES)
+  sample_sd <- sd(affected_area_data$SPL_THEMES)
+  sample_mean <- mean(affected_area_data$SPL_THEMES)
   
   # Set floor and ceiling (1.5 standard deviations)
-  floor_value <- -1.5 * national_sd
-  ceiling_value <- 1.5 * national_sd
+  floor_value <- -1.5 * sample_sd
+  ceiling_value <- 1.5 * sample_sd
   
   #An allocation funciton (how we will do our equity)
   allocation_func <- function(x) {
@@ -115,23 +149,28 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   # Find our how far our points are from the center 
   
-  # HERE I NEED TO STILL IMPLEMENT WEIGHTING CHANGE
   
   affected_area_data <- mutate(
       affected_area_data, 
-      SPLCENTER = (SPL_THEMES - national_mean),
-
-      SPLCENTER = pmin(pmax(SPLCENTER, floor_value), ceiling_value),
-      AllocationScore = allocation_func(SPLCENTER) * (affected_area_data$DamageLvl/5),
+      
+      AllocationScore = allocation_func(SPL_THEMES) * (affected_area_data$DamageLvl/5),
       AllocationPercentage = AllocationScore / sum(AllocationScore),
-      AidPerFIPS = AllocationPercentage * total_aid,
       AllocationPercentage = round(AllocationPercentage,4),
-      AllocationScore = round(AllocationScore,4),
-      SPLCENTER = round(SPLCENTER,4)
+      AllocationScore = round(AllocationScore,4)
   )
   
+  # Add AidPerFIPS conditionally
+  if(!is.null(total_aid)) {
+    affected_area_data <- affected_area_data %>%
+      mutate(AidPerFIPS = AllocationPercentage * total_aid)
+  } else {
+    affected_area_data <- affected_area_data %>%
+      mutate(AidPerFIPS = 0)
+  }
+  
+  
   return_data <- affected_area_data %>% 
-                select(FIPS, DamageLvl, SPLCENTER, AllocationScore, AllocationPercentage, AidPerFIPS) %>% 
+                select(FIPS, DamageLvl, AllocationScore, AllocationPercentage, AidPerFIPS) %>% 
                 arrange(desc(AidPerFIPS))
   
   return(return_data)
@@ -140,7 +179,10 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
 
 
 
-  result <- calculate_aid(df1, 1.04*10^5) #Jasper County Location data, Plus aid sent during Joplin $174 million USD (this assumes all went towards individuals and not general rebuilding)
+  #result <- calculate_aid(df1, 1.04*10^5) #Jasper County Location data, Plus aid sent during Joplin $174 million USD (this assumes all went towards individuals and not general rebuilding)
+  
+  resultJoplin <- calculate_aid(dfJoplin_Updated)
+  
   
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
@@ -149,6 +191,7 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   
   
+
   
   
   
