@@ -182,9 +182,9 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   #result <- calculate_aid(df1, 1.04*10^5) #Jasper County Location data, Plus aid sent during Joplin $174 million USD (this assumes all went towards individuals and not general rebuilding)
   
   resultJoplin <- calculate_aid(dfJoplin_Updated)
+
   
-  write.csv(resultJoplin , "JoplinAllocations")
-  
+  write_excel_csv(resultJoplin , "JoplinAllocations.csv")
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
   
