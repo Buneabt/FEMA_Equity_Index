@@ -183,6 +183,7 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   resultJoplin <- calculate_aid(dfJoplin_Updated)
   
+  write.csv(resultJoplin , "JoplinAllocations")
   
   ggplot(data = result, aes(x = AllocationPercentage)) +
     geom_histogram()
