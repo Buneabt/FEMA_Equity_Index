@@ -192,17 +192,15 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   
   
-
-  
   library(tidyverse)
-  library(tidycensus)
+  library(tigris)      # For downloading census geometries directly
   library(sf)
   library(ggplot2)
   library(RColorBrewer)
   
-  # Set your Census API key
-  census_api_key("1e4554fc55b2d758ee8843c0e0659fb4e6bf666e") # Uncomment and replace with your key
+  # Set tigris options
   options(tigris_use_cache = TRUE)
+  options(tigris_class = "sf")  # Use sf objects directly
   
   # Create data frame from Joplin results
   joplin_data <- tribble(
@@ -223,16 +221,12 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   joplin_data <- joplin_data %>%
     mutate(GEOID = as.character(FIPS))
   
-  # Get census tract geometries for Jasper and Newton counties, MO
-  # Note: Using get_acs as a simple way to get geometries, but we'll only use the geometries
-  mo_tracts <- get_acs(
-    geography = "tract",
-    variables = "B01001_001", # Total population (we just need this to get geometries)
-    state = "MO",
-    county = c("Jasper", "Newton"),
-    year = 2021,  # Using most recent year available
-    geometry = TRUE
-  )
+  # Get census tract geometries for Jasper and Newton counties, MO directly from tigris
+  jasper_tracts <- tracts(state = "29", county = "097", year = 2022)
+  newton_tracts <- tracts(state = "29", county = "145", year = 2022)
+  
+  # Combine the county tracts
+  mo_tracts <- rbind(jasper_tracts, newton_tracts)
   
   # Merge the allocation data with the census tract geometries
   joplin_map_data <- mo_tracts %>%
@@ -242,49 +236,49 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   joplin_map_data <- joplin_map_data %>%
     mutate(AllocationPercentage = replace_na(AllocationPercentage, 0))
   
-  # Create the map
-  joplin_map <- ggplot(joplin_map_data) +
-    geom_sf(aes(fill = AllocationPercentage)) +
+  # Only keep the tracts with allocation data (non-zero)
+  joplin_map_data_filtered <- joplin_map_data %>%
+    filter(AllocationPercentage > 0)
+  
+  # Get Joplin city boundaries
+  joplin_city <- places(state = "29", year = 2022) %>%
+    filter(NAME == "Joplin")
+  
+  # Add short FIPS identifier for labeling
+  joplin_map_data_filtered <- joplin_map_data_filtered %>%
+    mutate(tract_id = str_sub(GEOID, 6, 11))
+  
+  # Create the zoomed map
+  joplin_map_zoomed <- ggplot() +
+    geom_sf(data = joplin_map_data_filtered, aes(fill = AllocationPercentage), color = "white", size = 0.5, alpha = 0.7) +
+    geom_sf(data = joplin_city, fill = NA, color = "black", linetype = "dashed", size = 1) +
+    # Add labels
+    geom_sf_text(data = joplin_map_data_filtered, 
+                 aes(label = paste0(tract_id, "\n", scales::percent(AllocationPercentage, accuracy = 0.1))),
+                 size = 3.5, color = "black", fontface = "bold") +
     scale_fill_viridis_c(
       name = "Allocation %",
       option = "plasma",
       labels = scales::percent_format(accuracy = 0.1),
-      na.value = "grey90"
+      na.value = "grey90",
+      alpha = 0.7
     ) +
     theme_minimal() +
     labs(
       title = "Joplin, MO: Disaster Aid Allocation Percentages by Census Tract",
-      subtitle = "Based on SVI and Damage Assessment",
+      subtitle = "Based on SVI and Damage Assessment with City Boundary",
       caption = "Data source: Custom allocation model"
     ) +
     theme(
       plot.title = element_text(face = "bold"),
       legend.position = "right",
       axis.text = element_text(size = 8)
-    )
+    ) +
+    # Add buffer around the features to focus on them
+    coord_sf(expand = FALSE, datum = NA)
   
-  # Print the map
-  print(joplin_map)
+  # Print the zoomed map
+  print(joplin_map_zoomed)
   
-  # Save the map
-  ggsave("joplin_allocation_heatmap.png", joplin_map, width = 10, height = 8, dpi = 300)
-  
-  # Optional: Add city boundaries for context
-  # If you want to add city boundaries, you can use tigris
-  library(tigris)
-  
-  # Get Joplin city boundaries
-  joplin_city <- places(state = "MO", year = 2021) %>%
-    filter(NAME == "Joplin")
-  
-  # Add city boundary to map
-  joplin_map_with_city <- joplin_map +
-    geom_sf(data = joplin_city, fill = NA, color = "black", linetype = "dashed", size = 1) +
-    labs(subtitle = "Based on SVI and Damage Assessment with City Boundary")
-  
-  # Print the map with city boundary
-  print(joplin_map_with_city)
-  
-  
-  
-  
+  # Save the zoomed map
+  ggsave("joplin_allocation_heatmap_zoomed.png", joplin_map_zoomed, width = 10, height = 8, dpi = 300)
