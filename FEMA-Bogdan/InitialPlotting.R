@@ -191,7 +191,6 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   
   
-  
   library(tidyverse)
   library(tigris)      # For downloading census geometries directly
   library(sf)
@@ -256,12 +255,12 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
     geom_sf_text(data = joplin_map_data_filtered, 
                  aes(label = paste0(tract_id, "\n", scales::percent(AllocationPercentage, accuracy = 0.1))),
                  size = 3.5, color = "black", fontface = "bold") +
-    scale_fill_viridis_c(
+    # Use a custom color scale similar to the original map (red=high, yellow=medium, pink/purple=low)
+    scale_fill_gradientn(
       name = "Allocation %",
-      option = "plasma",
+      colors = c("#ffd700", "#ff8c00", "#ff4500", "#ff0000"),  # Yellow to orange to red
       labels = scales::percent_format(accuracy = 0.1),
-      na.value = "grey90",
-      alpha = 0.7
+      na.value = "grey90"
     ) +
     theme_minimal() +
     labs(
