@@ -190,7 +190,6 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   
   
   
-  
   library(tidyverse)
   library(tigris)      # For downloading census geometries directly
   library(sf)
@@ -205,15 +204,16 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   joplin_data <- tribble(
     ~FIPS, ~DamageLvl, ~AllocationScore, ~AllocationPercentage, ~AidPerFIPS, ~County, ~FIPS_short,
     29097010400, 5, 1.2088, 0.0924, 0, "Jasper", "01040",
-    29097010500, 5, 1.1694, 0.0894, 0, "Jasper", "01050",
-    29097010600, 5, 1.8895, 0.1445, 0, "Jasper", "01060",
+    29097010500, 3, 1.1694, 0.0894, 0, "Jasper", "01050",
+    29097010601, 5, 1.8895, 0.1445, 0, "Jasper", "01060",
+    29097010602, 5, 1.8895, 0.1445, 0, "Jasper", "01060",
     29097010700, 5, 1.2481, 0.0955, 0, "Jasper", "01070", 
-    29097010800, 5, 1.8375, 0.1405, 0, "Jasper", "01080",
-    29097010900, 5, 1.2368, 0.0946, 0, "Jasper", "01090",
-    29097011900, 5, 0.8952, 0.0685, 0, "Jasper", "01190",
-    29145020501, 5, 1.0481, 0.0802, 0, "Newton", "02050",
-    29145020502, 5, 1.2065, 0.0923, 0, "Newton", "02050",
-    29145020601, 5, 1.3355, 0.1021, 0, "Newton", "02060"
+    29097010800, 3, 1.8375, 0.1405, 0, "Jasper", "01080",
+    29097010900, 3, 1.2368, 0.0946, 0, "Jasper", "01090",
+    29097011900, 1, 0.8952, 0.0685, 0, "Jasper", "01190",
+    29145020501, 1, 1.0481, 0.0802, 0, "Newton", "02050",
+    29145020502, 1, 1.2065, 0.0923, 0, "Newton", "02050",
+    29145020601, 1, 1.3355, 0.1021, 0, "Newton", "02060"
   )
   
   # Format FIPS codes correctly for joining with census data
@@ -243,17 +243,36 @@ calculate_aid <- function(affected_area_data, total_aid = NULL) {
   joplin_city <- places(state = "29", year = 2022) %>%
     filter(NAME == "Joplin")
   
-  # Add short FIPS identifier for labeling
-  joplin_map_data_filtered <- joplin_map_data_filtered %>%
-    mutate(tract_id = str_sub(GEOID, 6, 11))
+  # Create a special dataframe for labels
+  label_data <- joplin_map_data_filtered %>%
+    # Create custom tract ID for display
+    mutate(
+      tract_id = case_when(
+        str_sub(GEOID, 6, 11) %in% c("010601", "010602") ~ "010600",
+        TRUE ~ str_sub(GEOID, 6, 11)
+      )
+    ) %>%
+    # Group by the new tract_id to combine 010601 and 010602
+    group_by(tract_id) %>%
+    # Take the first geometry of each group for positioning the label
+    slice(1) %>%
+    # For 010600, use the first tract's geometry but sum the allocation percentages
+    mutate(
+      display_percentage = case_when(
+        tract_id == "010600" ~ 0.1445,  # Just use the percentage directly
+        TRUE ~ AllocationPercentage
+      )
+    ) %>%
+    ungroup()
   
   # Create the zoomed map
   joplin_map_zoomed <- ggplot() +
+    # Plot the actual data with separate geometries for 010601 and 010602
     geom_sf(data = joplin_map_data_filtered, aes(fill = AllocationPercentage), color = "white", size = 0.5, alpha = 0.7) +
     geom_sf(data = joplin_city, fill = NA, color = "black", linetype = "dashed", size = 1) +
-    # Add labels
-    geom_sf_text(data = joplin_map_data_filtered, 
-                 aes(label = paste0(tract_id, "\n", scales::percent(AllocationPercentage, accuracy = 0.1))),
+    # Add labels using our special label dataframe
+    geom_sf_text(data = label_data, 
+                 aes(label = paste0(tract_id, "\n", scales::percent(display_percentage, accuracy = 0.1))),
                  size = 3.5, color = "black", fontface = "bold") +
     # Use a custom color scale similar to the original map (red=high, yellow=medium, pink/purple=low)
     scale_fill_gradientn(
